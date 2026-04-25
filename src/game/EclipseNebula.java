@@ -1,7 +1,6 @@
 package game;
 
 import edu.monash.fit2099.engine.displays.Display;
-import edu.monash.fit2099.engine.items.Inventory;
 import edu.monash.fit2099.engine.positions.DefaultGroundCreator;
 import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.World;
@@ -12,14 +11,24 @@ import java.util.List;
 /**
  * This class handles the miracle of creation, translating a bunch of periods
  * and hashtags into a sprawling, functional sci-fi facility.
+ *
+ * The company's armoured ship (Walls, Floors, Door) is where the workers begin.
+ * Three unique items are placed in the ship — one of each — forcing the workers
+ * to divide responsibilities among themselves.
  */
 public class EclipseNebula extends World {
+
     public EclipseNebula(Display display) {
         super(display);
     }
 
     /**
      * Initialise maps, actors, items, and grounds of the game world.
+     *
+     * The three shared items (AccessCard, FirstAidKit, SterilisationBox) are
+     * each instantiated exactly once and placed in the armoured ship for the
+     * workers to pick up and share responsibilities.
+     *
      * @throws Exception in case if anything goes wrong...
      */
     public void initialise() throws Exception {
@@ -56,20 +65,23 @@ public class EclipseNebula extends World {
         GameMap moon99DeprecatedMap = new GameMap("99-Deprecated", groundCreator, moon99Deprecated);
         this.addGameMap(moon99DeprecatedMap);
 
-        moon99DeprecatedMap.at(7, 2).addItem(new AccessCard());
+        // --- Single instances of the three shared items ---
+        moon99DeprecatedMap.at(5, 2).addItem(new AccessCard());
+        moon99DeprecatedMap.at(6, 2).addItem(new FirstAidKit());
+        moon99DeprecatedMap.at(7, 2).addItem(new SterilisationBox());
 
-        Inventory inventory1 = new BasicInventory();
-        inventory1.add(new Flask());
-        // BEHOLD, LOCAL MULTIPLAYER!!!
-        ContractedWorker contractedWorker1 = new ContractedWorker("#1 Bob", 'ඞ', 10, inventory1);
-        ContractedWorker contractedWorker2 = new ContractedWorker("#2 Tom", 'ඞ', 10, inventory1);
-        ContractedWorker contractedWorker3 = new ContractedWorker("#3 Sarah", 'ඞ', 10, inventory1);
-        ContractedWorker contractedWorker4 = new ContractedWorker("#4 Julie", 'ඞ', 10, inventory1);
-        ContractedWorker contractedWorker5 = new ContractedWorker("#5 Rick", 'ඞ', 10, inventory1);
-        this.addPlayer(contractedWorker1, moon99DeprecatedMap.at(6, 2));
-        this.addPlayer(contractedWorker2, moon99DeprecatedMap.at(7, 2));
-        this.addPlayer(contractedWorker3, moon99DeprecatedMap.at(8, 2));
-        this.addPlayer(contractedWorker4, moon99DeprecatedMap.at(6, 4));
-        this.addPlayer(contractedWorker5, moon99DeprecatedMap.at(8, 4));
+        // --- Workers: each created with their own WeightLimitedInventory and a Flask ---
+        ContractedWorker contractedWorker1 = new ContractedWorker("#1 Bob", 'ඞ', 10);
+        ContractedWorker contractedWorker2 = new ContractedWorker("#2 Tom", 'ඞ', 10);
+        ContractedWorker contractedWorker3 = new ContractedWorker("#3 Sarah", 'ඞ', 10);
+        ContractedWorker contractedWorker4 = new ContractedWorker("#4 Julie", 'ඞ', 10);
+        ContractedWorker contractedWorker5 = new ContractedWorker("#5 Rick", 'ඞ', 10);
+
+        // Place workers inside the armoured ship
+        this.addPlayer(contractedWorker1, moon99DeprecatedMap.at(4, 2));
+        this.addPlayer(contractedWorker2, moon99DeprecatedMap.at(4, 3));
+        this.addPlayer(contractedWorker3, moon99DeprecatedMap.at(4, 4));
+        this.addPlayer(contractedWorker4, moon99DeprecatedMap.at(5, 3));
+        this.addPlayer(contractedWorker5, moon99DeprecatedMap.at(5, 4));
     }
 }
