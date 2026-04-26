@@ -6,9 +6,7 @@ import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.World;
 import game.actors.ContractedWorker;
 import game.grounds.*;
-import game.items.AccessCard;
-import game.items.FirstAidKit;
-import game.items.SterilisationBox;
+import game.items.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +14,6 @@ import java.util.List;
 /**
  * This class handles the miracle of creation, translating a bunch of periods
  * and hashtags into a sprawling, functional sci-fi facility.
- *
  * The company's armoured ship (Walls, Floors, Door) is where the workers begin.
  * Three unique items are placed in the ship — one of each — forcing the workers
  * to divide responsibilities among themselves.
@@ -29,11 +26,9 @@ public class EclipseNebula extends World {
 
     /**
      * Initialise maps, actors, items, and grounds of the game world.
-     *
      * The three shared items (AccessCard, FirstAidKit, SterilisationBox) are
      * each instantiated exactly once and placed in the armoured ship for the
      * workers to pick up and share responsibilities.
-     *
      * @throws Exception in case if anything goes wrong...
      */
     public void initialise() throws Exception {
@@ -43,6 +38,7 @@ public class EclipseNebula extends World {
         groundCreator.registerGround('~', Puddle::new);
         groundCreator.registerGround('_', Floor::new);
         groundCreator.registerGround('=', Door::new);
+        groundCreator.registerGround('o', Dirt::new);
 
         List<String> moon99Deprecated = Arrays.asList(
                 "....................########################################",
@@ -88,5 +84,12 @@ public class EclipseNebula extends World {
         this.addPlayer(contractedWorker3, moon99DeprecatedMap.at(4, 4));
         this.addPlayer(contractedWorker4, moon99DeprecatedMap.at(5, 3));
         this.addPlayer(contractedWorker5, moon99DeprecatedMap.at(5, 4));
+
+        // --- Items: Placed at o in teh map
+        moon99DeprecatedMap.at(37, 1).addItem(new Apple());
+        moon99DeprecatedMap.at(21, 11).addItem(new Cookies());
+        moon99DeprecatedMap.at(32, 17).addItem(new Lantern());
+        moon99DeprecatedMap.at(45, 17).addItem(new FloppyDisk());
+        moon99DeprecatedMap.at(21, 11).addItem(new CRTMonitor());
     }
 }
