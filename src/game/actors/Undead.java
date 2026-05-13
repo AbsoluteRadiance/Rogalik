@@ -16,7 +16,7 @@ public class Undead extends Creature implements Hostile {
      */
     public Undead() {
         super("Undead", 'Ѫ', 15);
-        behaviours.put(1, new AttackBehaviour());
-        behaviours.put(2, new WanderBehaviour());
+        behaviours.add(new WanderBehaviour());
+        behaviours.add(new AttackBehaviour());
     }
 }

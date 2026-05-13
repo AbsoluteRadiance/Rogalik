@@ -16,7 +16,7 @@ public class Slime extends Creature {
      */
     public Slime() {
         super("Slime", '⍾', 25);
-        behaviours.put(1, new ConsumeBehaviour());
-        behaviours.put(2, new WanderBehaviour());
+        behaviours.add(new WanderBehaviour());
+        behaviours.add(new ConsumeBehaviour());
     }
 }

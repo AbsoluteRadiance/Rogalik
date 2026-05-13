@@ -4,75 +4,75 @@ import edu.monash.fit2099.engine.actions.ActionList;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.items.Item;
 import edu.monash.fit2099.engine.positions.GameMap;
+import edu.monash.fit2099.engine.positions.Location;
 import edu.monash.fit2099.engine.statistics.BaseStatistic;
-import edu.monash.fit2099.engine.statistics.StatisticOperations;
-import edu.monash.fit2099.engine.actors.ActorStatistics;
 import game.actions.Consumable;
 import game.actions.ConsumeAction;
+import game.actions.Sellable;
 import game.enums.ItemStatistics;
 import game.enums.WorkerAbility;
 
 /**
- * Represents a package of expired Cookies found on the moon's facility.
- * Contains 5 individual cookies, each of which can be consumed separately.
- * Without a SterilisationBox, each cookies permanently decreases the consumer's maximum health by 1.
- * With a sterilisation box a cookie healths the consumer for 1 health.
- * The package is removed from the inventory once all cookies have been consumed.
+ * A pack of expired cookies with 5 individual servings.
+ *
+ * <p><b>REQ1</b>: Implements {@link Sellable}. Dynamic price: 1 credit per
+ * remaining cookie. Selling deducts 1 HP per cookie sold ("organic processing fee").</p>
+ *
+ * @author Ben (base), Shivam (REQ1 Sellable)
  */
-public class Cookies extends Item implements Consumable {
+public class Cookies extends Item implements Consumable, Sellable {
+
     private static final int WEIGHT = 2;
     private static final int MAX_USES = 5;
-    private static final int HEAL_AMOUNT = 1;
-    private int usesRemaining;
+    private int cookiesRemaining;
 
     /**
      * Constructor for Cookies.
-     * Assigns its attributes according to the fields above.
      */
     public Cookies() {
         super("Cookies", '◍');
+        this.cookiesRemaining = MAX_USES;
         this.addNewStatistic(ItemStatistics.WEIGHT, new BaseStatistic(WEIGHT));
         this.makePortable();
-        this.usesRemaining = MAX_USES;
     }
 
     /**
-     * Consumes one cookie, applying either a heal or maximum health decrease,
-     * dependent on if the consumer is carrying a SterilisationBox.
-     * Removes the package from the actor's inventory once all cookies are consumed.
+     * Eats one cookie. Without SterilisationBox: permanently -1 max HP.
+     * With one: heals 1 HP.
      *
-     * @param actor the actor who is consuming
+     * @param actor the actor consuming
      */
     @Override
     public void consume(Actor actor) {
+        cookiesRemaining--;
         if (actor.hasAbility(WorkerAbility.CAN_STERILISE)) {
-            actor.heal(HEAL_AMOUNT);
+            actor.heal(1);
         } else {
-            actor.modifyStatisticMaximum(ActorStatistics.HEALTH, StatisticOperations.DECREASE, 1);
+            actor.modifyStatisticMaximum(
+                    edu.monash.fit2099.engine.actors.ActorStatistics.HEALTH,
+                    edu.monash.fit2099.engine.statistics.StatisticOperations.DECREASE, 1);
         }
-        usesRemaining -= 1;
         if (isDepleted()) {
             actor.getInventory().remove(this);
         }
     }
 
     /**
-     * Returns whether all cookies in the package have been eaten.
+     * Returns true when all cookies are eaten.
      *
-     * @return a boolean; true if there are no cookies left, otherwise false
+     * @return true if cookiesRemaining == 0
      */
     @Override
     public boolean isDepleted() {
-        return usesRemaining <= 0;
+        return cookiesRemaining == 0;
     }
 
     /**
-     * Returns a list of allowable actions for the carrier.
-     * Includes a ConsumeAction only if there are still cookies left in the package.
+     * Returns allowable actions.
      *
-     * @param owner the actor that owns the item
-     * @param map the map where the actor is performing the action on
-     * @return a list of allowable actions
+     * @param owner the owner
+     * @param map   the map
+     * @return list of actions
      */
     @Override
     public ActionList allowableActions(Actor owner, GameMap map) {
@@ -81,5 +81,33 @@ public class Cookies extends Item implements Consumable {
             actions.add(new ConsumeAction(this));
         }
         return actions;
+    }
+
+    /**
+     * Dynamic sell price: 1 credit per remaining cookie.
+     *
+     * @return cookiesRemaining
+     */
+    @Override
+    public int getSellPrice() {
+        return cookiesRemaining;
+    }
+
+    /**
+     * Organic processing fee: seller loses 1 HP per cookie sold.
+     *
+     * @param seller   the worker selling
+     * @param location the seller's location
+     */
+    @Override
+    public void onSell(Actor seller, Location location) {
+        int cookiesSold = cookiesRemaining;
+        seller.hurt(cookiesSold);
+        System.out.println(seller + " pays the organic processing fee: -" + cookiesSold + " HP!");
+    }
+
+    @Override
+    public String toString() {
+        return "Cookies (" + cookiesRemaining + "/" + MAX_USES + ")";
     }
 }

@@ -43,6 +43,7 @@ public class EclipseNebula extends World {
         groundCreator.registerGround('_', Floor::new);
         groundCreator.registerGround('=', Door::new);
         groundCreator.registerGround('o', Hole::new);
+        groundCreator.registerGround('\u2261', Supercomputer::new);
 
         List<String> moon99Deprecated = Arrays.asList(
                 "....................########################################",
@@ -67,10 +68,10 @@ public class EclipseNebula extends World {
                 "....................########################################"
         );
 
-        // ship map
+        // ship map — ≡ is the Supercomputer terminal
         List<String> shipMap = Arrays.asList(
                 "#######",
-                "#_____#",
+                "#\u2261____#",
                 "#_____=",
                 "#_____#",
                 "#######"

@@ -2,7 +2,6 @@ package game.grounds;
 
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Ground;
-import edu.monash.fit2099.engine.positions.Location;
 import game.map.AlarmSystem;
 import game.actions.Unlockable;
 
@@ -15,7 +14,7 @@ public class Door extends Ground implements Unlockable {
 
     /** Initialises the door in a locked state. */
     private boolean isUnlocked = false;
-    private boolean isOnLockdown = false;
+    public boolean isOnLockdown = false;
 
     /**
      * Constructor for Door.
@@ -34,15 +33,6 @@ public class Door extends Ground implements Unlockable {
     }
 
     /**
-     * Returns whether the Alarm is active and doors are on lockdown.
-     *
-     * @return the state of the lockdown system, true if active
-     */
-    public boolean isOnLockdown() {
-        return isOnLockdown;
-    }
-
-    /**
      * Locks the door when the alarm activates
      * or is currently still active.
      */
@@ -50,19 +40,6 @@ public class Door extends Ground implements Unlockable {
         if (AlarmSystem.isActive()) {
             isUnlocked = false;
             isOnLockdown = true;
-        }
-    }
-
-    /**
-     * Called every tick to check if the alarm system is active
-     * If it is, activate lockdown for doors.
-     *
-     * @param location The location of the Ground
-     */
-    @Override
-    public void tick(Location location) {
-        if (AlarmSystem.isActive()) {
-            activateLockdown();
         }
     }
 

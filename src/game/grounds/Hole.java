@@ -4,13 +4,10 @@ import edu.monash.fit2099.engine.GameEngineException;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
-import game.actors.Creature;
 import game.actors.Slime;
 import game.actors.Undead;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Random;
-import java.util.function.Supplier;
 
 /**
  * Represents a hole in the Moon facility's floor.
@@ -22,7 +19,6 @@ public class Hole extends Ground {
     private static final int SPAWN_INTERVAL = 20;
     private int turnCounter;
     private final Random random = new Random();
-    private final List<Supplier<Creature>> spawnables  = new ArrayList<>();
 
     /**
      * Constructor for Hole.
@@ -32,12 +28,10 @@ public class Hole extends Ground {
     public Hole() {
         super('o', "Hole");
         this.turnCounter = 0;
-        spawnables.add(Undead::new);
-        spawnables.add(Slime::new);
     }
 
     /**
-     * Called once per turn, increments the turn counter and spawns a creature.
+     * Called once per turn. Increments the turn counter and spawns a creature.
      * Has an equal chance of spawning either an Undead or a Slime.
      * Contains a failsafe to not spawn anything if an entity somehow occupies the hole.
      *
@@ -50,15 +44,17 @@ public class Hole extends Ground {
             turnCounter = 0;
             if (!location.containsAnActor()) {
                 try {
-                    Creature creature = spawnables.get(random.nextInt(spawnables.size())).get();
-                    location.addActor(creature);
+                    if (random.nextInt(2) == 0) {
+                        location.addActor(new Undead());
+                    } else {
+                        location.addActor(new Slime());
+                    }
                 } catch (GameEngineException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
             }
         }
     }
-
 
     /**
      * Holes are impassable and cannot be entered by any actors.

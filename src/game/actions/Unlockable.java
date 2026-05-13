@@ -11,18 +11,4 @@ public interface Unlockable {
      * by implementing classes.
      */
     void unlock();
-
-    /**
-     * A boolean method to be implemented by unlockable objects,
-     * typically returning whether the Alarm system is active
-     *
-     * @return the state of the lockdown system
-     */
-    boolean isOnLockdown();
-
-    /**
-     * A method to activate the lockdown, called when the alarm
-     * system activates
-     */
-    void activateLockdown();
 }

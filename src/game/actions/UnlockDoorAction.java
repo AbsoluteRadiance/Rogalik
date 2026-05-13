@@ -4,15 +4,16 @@ import edu.monash.fit2099.engine.actions.Action;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.Location;
+import game.grounds.Door;
 
 /**
  * The bureaucratic process of asking a piece of the environment for permission to pass.
  */
-public class UnlockAction extends Action {
-    private final Unlockable unlockable;
+public class UnlockDoorAction extends Action {
+    private final Location doorLocation;
 
-    public UnlockAction(Unlockable unlockable) {
-        this.unlockable = unlockable;
+    public UnlockDoorAction(Location doorLocation) {
+        this.doorLocation = doorLocation;
     }
 
     /**
@@ -24,11 +25,17 @@ public class UnlockAction extends Action {
      */
     @Override
     public String execute(Actor actor, GameMap map) {
-        if (unlockable.isOnLockdown()) {
-            return "The alarm is active! It has been sealed.";
+        Door door = doorLocation.getGroundAs(Door.class);
+        door.activateLockdown();
+            if (door.isOnLockdown) {
+                return "The alarm is active! Doors are sealed.";
+            }
+        Unlockable unlockable = doorLocation.getGroundAs(Unlockable.class);
+        if (unlockable != null) {
+            unlockable.unlock();
+            return actor + " unlocked a door at " + doorLocation;
         }
-        unlockable.unlock();
-        return actor + " unlocked " + unlockable;
+        return "There is no unlockable door at " + doorLocation;
     }
 
     /**
