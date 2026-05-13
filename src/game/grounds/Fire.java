@@ -3,75 +3,55 @@ package game.grounds;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
-import game.capabilities.Burn;
-import game.capabilities.Flammable;
+import game.status.DamageOverTimeStatus;
 
 /**
- * A fire tile spawned by a leaking {@link game.items.Lantern}.
- * Burns any {@link Flammable} actor standing on it for 1 damage per turn
- * for 5 turns via the {@link Burn} status effect.
- * The fire itself lasts {@value FIRE_DURATION} turns before extinguishing
- * and being replaced by {@link Dirt}.
+ * Represents a fire tile on the ground, spawned by a Lantern leaking oil.
+ * Fire persists for a set number of turns.
+ * Any actor standing on the fire receives damage for a set number of turns.
+ * Once expired, the fire will restore the original ground that was set aflame.
  */
 public class Fire extends Ground {
 
-    /**
-     * Number of turns the fire tile remains on the ground.
-     */
-    private static final int FIRE_DURATION = 5;
+    /** The number of turns the fire is on the ground for. */
+    private static final int FIRE_TURNS = 5;
 
-    /**
-     * Remaining turns before this fire tile extinguishes.
-     */
+    /** The amount of damage an actor per turn, once aflame */
+    private static final int DAMAGE_PER_TURN = 1;
+
+    /** How long the actor for takes damage once aflame */
+    private static final int BURNING_TURNS = 5;
+
     private int turnsRemaining;
+    private final Ground originalGround;
 
     /**
-     * Constructor.
+     * Constructor for Fire.
+     * Stores the original ground so it can be restored when the fire expires.
+     * @param originalGround
      */
-    public Fire() {
+    public Fire(Ground originalGround) {
         super('^', "Fire");
-        this.turnsRemaining = FIRE_DURATION;
+        this.originalGround = originalGround;
+        this.turnsRemaining = FIRE_TURNS;
     }
 
     /**
-     * Called once per turn by the engine.
-     * If a {@link Flammable} actor is present and not already burning,
-     * applies a {@link Burn} status to them.
-     * Decrements the fire's lifespan and replaces itself with {@link Dirt}
-     * when expired.
+     * Called once per turn. If an actor is standing on this tile, apply a
+     * DamageOverTime effect. At the same time,
+     * decrement the fire's lifespan by one.
      *
-     * @param location the location of this fire tile
+     * @param location The location of the Ground
      */
     @Override
     public void tick(Location location) {
-        System.out.println("Fire ticking at " + location + " | turns remaining: " + turnsRemaining);
-
-        if (location.containsAnActor()) {
-            Actor actor = location.getActor();
-            System.out.println("Actor on fire tile: " + actor);
-
-            Flammable flammable = location.getActorAs(Flammable.class);
-            System.out.println("Flammable cast result: " + flammable);
-
-            boolean alreadyBurning = actor.hasStatus(Burn.class);
-            System.out.println("Already has Burn status: " + alreadyBurning);
-
-            if (flammable != null && !alreadyBurning) {
-                actor.addStatus(new Burn(flammable));
-                System.out.println("Burn status added to " + actor);
-            }
-
-            // print all current statuses
-            System.out.println("Current statuses on " + actor + ": " + actor.statuses());
-
-        } else {
-            System.out.println("No actor on fire tile.");
+        Actor actor = location.getActor();
+        if (actor != null) {
+            actor.addStatus(new DamageOverTimeStatus(BURNING_TURNS, DAMAGE_PER_TURN));
         }
-
-        turnsRemaining--;
+        turnsRemaining -= 1;
         if (turnsRemaining <= 0) {
-            location.setGround(new Dirt());
-            System.out.println("Fire extinguished.");
+            location.setGround(originalGround);
         }
     }
 }

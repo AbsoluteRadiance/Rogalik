@@ -7,109 +7,87 @@ import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.Location;
 import edu.monash.fit2099.engine.statistics.BaseStatistic;
 import edu.monash.fit2099.engine.statistics.StatisticOperations;
-import game.utils.ItemStatistics;
-import game.actions.UseFirstAidKitAction;
+import edu.monash.fit2099.engine.actors.ActorStatistics;
+import game.actions.Consumable;
+import game.actions.ConsumeAction;
+import game.enums.ItemStatistics;
 
 /**
- * A super useful medical item weighing 25 units.
- * When used, it permanently increases the worker's maximum health by 1 point
- * and fully restores their health.
- * Has a 20-turn cooldown that only progresses while the kit is carried by a worker.
- * If left on the floor, the cooldown timer is paused.
+ * Represents the first aid kit carried by workers in the moon's facility.
+ * When consumed, permanently increases the carrier's maximum health by 1,
+ * and restores their health to full.
+ * Has a 20-turn cooldown between uses. Cooldown pauses if the kit is dropped on the ground.
  */
-public class FirstAidKit extends Item {
-
+public class FirstAidKit extends Item implements Consumable {
     private static final int WEIGHT = 25;
-    private static final int COOLDOWN_TURNS = 20;
-
+    private static final int COOLDOWN = 20;
     private int cooldownRemaining;
 
+    /**
+     * Constructor for First Aid Kit.
+     * Assigns its attributes according to the fields above,
+     * and initialises the cooldown at 0 - it hasn't been used yet.
+     */
     public FirstAidKit() {
         super("First Aid Kit", '+');
-        makePortable();
         this.addNewStatistic(ItemStatistics.WEIGHT, new BaseStatistic(WEIGHT));
-        this.cooldownRemaining = 0; // ready to use at the start
+        this.makePortable();
+        this.cooldownRemaining = 0;
     }
 
     /**
-     * Ticks the cooldown only while the kit is being carried by an actor.
-     * This is called by the engine each turn when the item is in an inventory.
+     * Consumed the First Aid Kit, permanently increasing the worker's maximum health by 1
+     * and restoring health to full. Starts the 20-turn cooldown.
      *
-     * @param currentLocation The location of the actor carrying this item.
-     * @param actor           The actor carrying this item.
+     * @param actor the actor who is consuming
+     */
+    @Override
+    public void consume(Actor actor) {
+        actor.modifyStatisticMaximum(ActorStatistics.HEALTH, StatisticOperations.INCREASE, 1);
+        actor.modifyStatistic(ActorStatistics.HEALTH, StatisticOperations.UPDATE, actor.getMaximumStatistic(ActorStatistics.HEALTH));
+        cooldownRemaining = COOLDOWN;
+    }
+
+    /**
+     * This method is instead used to return whether the cooldown is still active,
+     * as this item has infinite uses.
+     *
+     * @return a boolean; true if the remaining cooldown is greater than 0, false otherwise
+     */
+    @Override
+    public boolean isDepleted() {
+        return cooldownRemaining > 0;
+    }
+
+    /**
+     * Called once per turn while carried.
+     * Checks if the cooldown is active,
+     * and if it is, decrements the cooldown by 1 per turn.
+     *
+     * @param currentLocation The location of the actor carrying this Item.
+     * @param actor The actor carrying this Item.
      */
     @Override
     public void tick(Location currentLocation, Actor actor) {
         if (cooldownRemaining > 0) {
-            cooldownRemaining--;
+            cooldownRemaining -= 1;
         }
     }
 
     /**
-     * Does NOT tick cooldown when on the ground — the timer is paused.
+     * Returns a list of allowable actions for the carrier.
+     * Includes a ConsumeAction only if the first aid kit is off cooldown.
      *
-     * @param currentLocation The location of the ground on which we lie.
-     */
-    @Override
-    public void tick(Location currentLocation) {
-        // Intentionally left empty: cooldown does not progress on the floor
-    }
-
-    /**
-     * Returns the UseFirstAidKitAction if the kit is not on cooldown.
-     *
-     * @param owner the actor carrying this item
-     * @param map   the current game map
-     * @return action list containing the use action if available
+     * @param owner the actor that owns the item
+     * @param map the map where the actor is performing the action on
+     * @return a list of allowable actions
      */
     @Override
     public ActionList allowableActions(Actor owner, GameMap map) {
         ActionList actions = new ActionList();
-        if (isReady()) {
-            actions.add(new UseFirstAidKitAction(this));
+        if (!isDepleted()) {
+            actions.add(new ConsumeAction(this));
         }
         return actions;
-    }
-
-    /**
-     * Uses the kit: increases max health by 1 and restores health to full.
-     * Starts the cooldown.
-     *
-     * @param actor the actor using the kit
-     * @return description of what happened
-     */
-    public String use(Actor actor) {
-        // Increase max health by 1 and restore to full
-        actor.modifyStatisticMaximum(
-                edu.monash.fit2099.engine.actors.ActorStatistics.HEALTH,
-                StatisticOperations.INCREASE,
-                1
-        );
-        actor.heal(actor.getMaximumStatistic(edu.monash.fit2099.engine.actors.ActorStatistics.HEALTH));
-        cooldownRemaining = COOLDOWN_TURNS;
-        return actor + " uses the First Aid Kit! Max health increased by 1 and health fully restored. "
-                + "(Cooldown: " + COOLDOWN_TURNS + " turns)";
-    }
-
-    /**
-     * @return true if the kit is ready to be used (cooldown has expired)
-     */
-    public boolean isReady() {
-        return cooldownRemaining == 0;
-    }
-
-    /**
-     * @return remaining cooldown turns
-     */
-    public int getCooldownRemaining() {
-        return cooldownRemaining;
-    }
-
-    @Override
-    public String toString() {
-        if (isReady()) {
-            return "First Aid Kit (ready)";
-        }
-        return "First Aid Kit (cooldown: " + cooldownRemaining + " turns)";
     }
 }

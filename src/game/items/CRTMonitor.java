@@ -2,19 +2,24 @@ package game.items;
 
 import edu.monash.fit2099.engine.items.Item;
 import edu.monash.fit2099.engine.statistics.BaseStatistic;
-import game.utils.ItemStatistics;
+import game.enums.ItemStatistics;
 
 /**
- * A massive, incredibly heavy piece of archaic junk.
- * Weighs 30 units. Has no special interaction.
+ * Represents a CRT monitor found on the Moon facility.
+ * Is even more useless than the floppy disk somehow.
+ * Not only does this item do absolutely nothing but it also takes up 30 weight.
+ * Can be picked up and dropped by workers.
  */
-public class CRTMonitor extends Item {
-
+public class CrtMonitor extends Item {
     private static final int WEIGHT = 30;
 
-    public CRTMonitor() {
+    /**
+     * Constructor for the CrtMonitor.
+     * Assigns its attributes according to the fields above.
+     */
+    public CrtMonitor() {
         super("CRT Monitor", '◙');
-        makePortable();
         this.addNewStatistic(ItemStatistics.WEIGHT, new BaseStatistic(WEIGHT));
+        this.makePortable();
     }
 }

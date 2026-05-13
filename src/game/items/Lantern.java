@@ -2,55 +2,59 @@ package game.items;
 
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.items.Item;
+import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
 import edu.monash.fit2099.engine.statistics.BaseStatistic;
 import game.grounds.Fire;
-import game.utils.ItemStatistics;
+import game.enums.ItemStatistics;
 
 import java.util.Random;
 
 /**
- * An unstable light source with 10 units of oil fuel.
- * While carried, has a 5% chance each turn to leak and ignite the ground
- * beneath the actor, spawning a Fire tile and consuming 1 unit of fuel.
- * Weighs 7 units.
+ * Represents a (rather unstable) Lantern carried by workers.
+ * While carried, the lantern has a small chance to leak oil and start a fire.
+ * Each leak consumes one unit of oil.
+ * When all oil is consumed, the lantern is dropped by the worker.
  */
 public class Lantern extends Item {
-
     private static final int WEIGHT = 7;
-    private static final int MAX_FUEL = 10;
-    private static final double LEAK_CHANCE = 0.05;
+    private static final int MAX_OIL = 10;
+    private static final int LEAK_CHANCE = 5;
+    private int oilRemaining;
+    private final Random random = new Random();
 
-    private int fuel;
-    private final Random random;
-
+    /**
+     * Constructor for Lantern.
+     * Sets the oil to its max value,
+     * and assigns its attributes according to the fields above.
+     */
     public Lantern() {
         super("Lantern", '&');
-        makePortable();
         this.addNewStatistic(ItemStatistics.WEIGHT, new BaseStatistic(WEIGHT));
-        this.fuel = MAX_FUEL;
-        this.random = new Random();
+        this.makePortable();
+        this.oilRemaining = MAX_OIL;
     }
 
     /**
-     * Each turn while carried, 5% chance to leak and ignite the ground below.
-     * Reduces fuel by 1 and spawns a Fire ground at the actor's location.
+     * Called once per turn while the lantern is being carried.
+     * Has a 5% chance to leak oil, which starts a fire
+     * and decrements the oil supply by 1.
+     * Remove from the worker's inventory when oil is fully depleted.
      *
-     * @param currentLocation the location of the carrying actor
-     * @param actor           the actor carrying this lantern
+     * @param currentLocation The location of the actor carrying this Item.
+     * @param actor The actor carrying this Item.
      */
     @Override
     public void tick(Location currentLocation, Actor actor) {
-        if (fuel > 0 && random.nextDouble() <= LEAK_CHANCE) {
-            fuel--;
-            currentLocation.setGround(new Fire());
-            System.out.println(actor + "'s lantern leaks! Fire ignites beneath them. (Fuel: "
-                    + fuel + "/" + MAX_FUEL + ")");
+        if (oilRemaining > 0) {
+            if (random.nextInt(100) < LEAK_CHANCE) {
+                Ground originalGround = currentLocation.getGround();
+                currentLocation.setGround(new Fire(originalGround));
+                oilRemaining--;
+                if (oilRemaining <= 0) {
+                    actor.getInventory().remove(this);
+                }
+            }
         }
-    }
-
-    @Override
-    public String toString() {
-        return "Lantern (fuel: " + fuel + "/" + MAX_FUEL + ")";
     }
 }

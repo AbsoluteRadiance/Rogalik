@@ -1,4 +1,4 @@
-package game.utils;
+package game.map;
 
 /**
  * A repository for the game's high-fidelity, next-generation graphical assets

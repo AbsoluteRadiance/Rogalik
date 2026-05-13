@@ -2,16 +2,18 @@ package game.actions;
 
 import edu.monash.fit2099.engine.actions.Action;
 import edu.monash.fit2099.engine.actors.Actor;
-import edu.monash.fit2099.engine.positions.Exit;
 import edu.monash.fit2099.engine.positions.GameMap;
-import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
-import game.grounds.Door;
 
 /**
  * The bureaucratic process of asking a piece of the environment for permission to pass.
  */
-public class UnlockDoorAction extends Action {
+public class UnlockAction extends Action {
+    private final Unlockable unlockable;
+
+    public UnlockAction(Unlockable unlockable) {
+        this.unlockable = unlockable;
+    }
 
     /**
      * When executed, it will search for a nearby door and unlock it.
@@ -22,19 +24,20 @@ public class UnlockDoorAction extends Action {
      */
     @Override
     public String execute(Actor actor, GameMap map) {
-        Location currentLocation = map.locationOf(actor);
-        for (Exit exit : currentLocation.getExits()) {
-            Location surroundingLocation = exit.getDestination();
-            Ground surroundingGround = surroundingLocation.getGround();
-            if (surroundingGround.getDisplayChar() == '=') {
-                Door door = (Door) surroundingGround;
-                door.unlock();
-                return actor + " unlocked " + door + " at " + surroundingLocation;
-            }
+        if (unlockable.isOnLockdown()) {
+            return "The alarm is active! It has been sealed.";
         }
-        return "There is no door to unlock.";
+        unlockable.unlock();
+        return actor + " unlocked " + unlockable;
     }
 
+    /**
+     * Descriptor for the menu console,
+     * to inform players on what the action entails.
+     *
+     * @param actor The actor performing the action
+     * @return a String confirming the action taken that turn
+     */
     @Override
     public String menuDescription(Actor actor) {
         return actor + " unlocks door";
