@@ -7,12 +7,12 @@ import edu.monash.fit2099.engine.positions.Exit;
 import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.Location;
 import edu.monash.fit2099.engine.statistics.BaseStatistic;
+import game.actions.LockableDoor;
 import game.actions.Purchasable;
 import game.actions.UnlockDoorAction;
 import game.actors.Wallet;
 import game.enums.ItemStatistics;
 import game.enums.WorkerAbility;
-import game.grounds.Door;
 
 /**
  * A security access card granting entry through doors.
@@ -72,18 +72,21 @@ public class AccessCard extends Item implements Purchasable {
     }
 
     /**
-     * Returns allowable actions — UnlockDoorAction for each adjacent door.
+     * Provides {@link UnlockDoorAction}s for every adjacent lockable door.
+     * Uses the {@link LockableDoor} capability check via {@link Location#getGroundAs}
+     * to avoid coupling to concrete door types.
      *
-     * @param owner the actor that owns the item
-     * @param map   the map
-     * @return list of actions
+     * @param owner the actor carrying this card
+     * @param map   the current game map
+     * @return list of unlock actions
      */
     @Override
     public ActionList allowableActions(Actor owner, GameMap map) {
         ActionList actions = new ActionList();
         Location location = map.locationOf(owner);
         for (Exit exit : location.getExits()) {
-            if (exit.getDestination().getGround() instanceof Door) {
+            LockableDoor lockable = exit.getDestination().getGroundAs(LockableDoor.class);
+            if (lockable != null) {
                 actions.add(new UnlockDoorAction(exit.getDestination()));
             }
         }

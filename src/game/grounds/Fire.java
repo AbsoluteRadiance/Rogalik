@@ -13,9 +13,6 @@ import game.status.DamageOverTimeStatus;
  */
 public class Fire extends Ground {
 
-    /** The number of turns the fire is on the ground for. */
-    private static final int FIRE_TURNS = 5;
-
     /** The amount of damage an actor per turn, once aflame */
     private static final int DAMAGE_PER_TURN = 1;
 
@@ -30,10 +27,10 @@ public class Fire extends Ground {
      * Stores the original ground so it can be restored when the fire expires.
      * @param originalGround
      */
-    public Fire(Ground originalGround) {
+    public Fire(Ground originalGround, int burnTime) {
         super('^', "Fire");
         this.originalGround = originalGround;
-        this.turnsRemaining = FIRE_TURNS;
+        this.turnsRemaining = burnTime;
     }
 
     /**

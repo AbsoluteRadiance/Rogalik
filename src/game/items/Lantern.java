@@ -55,7 +55,7 @@ public class Lantern extends Item implements Sellable {
     public void tick(Location currentLocation, Actor actor) {
         if (oilRemaining > 0 && Math.random() < LEAK_CHANCE) {
             oilRemaining--;
-            currentLocation.setGround(new Fire(currentLocation.getGround()));
+            currentLocation.setGround(new Fire(currentLocation.getGround(), 5));
             System.out.println("The lantern leaks! Fire spawned! Oil remaining: " + oilRemaining);
         }
     }
@@ -87,7 +87,7 @@ public class Lantern extends Item implements Sellable {
         if (Math.random() < 0.25) {
             for (Exit exit : location.getExits()) {
                 Location dest = exit.getDestination();
-                dest.setGround(new Fire(dest.getGround()));
+                dest.setGround(new Fire(dest.getGround(), 5));
             }
             System.out.println("The lantern explodes! Fire on all surrounding tiles!");
         }

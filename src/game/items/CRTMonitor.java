@@ -61,7 +61,7 @@ public class CrtMonitor extends Item implements Sellable {
             System.out.println("SHORT CIRCUIT! " + seller + " takes " + SHORT_DAMAGE + " damage!");
             for (Exit exit : location.getExits()) {
                 Location dest = exit.getDestination();
-                dest.setGround(new Fire(dest.getGround()));
+                dest.setGround(new Fire(dest.getGround(), 5));
             }
             System.out.println("Fire spawns on all surrounding tiles!");
         }
