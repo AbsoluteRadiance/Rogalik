@@ -1,22 +1,23 @@
 package game.grounds.doors;
 
-import edu.monash.fit2099.engine.actions.ActionList;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Exit;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
 import game.actions.LockableDoor;
-import game.actions.UnlockDoorAction;
+import game.actions.UnlockEffect;
 import game.enums.DoorLevel;
 import game.grounds.Fire;
-import game.grounds.Floor;
 
 /**
  * A heavy iron security door ({@code N}) requiring Access Card Level 2 or higher.
  *
- * <p>When unlocked, the rusted mechanism overheats, instantly setting all
- * adjacent floor tiles on fire. This fire lasts for 2 turns and applies
- * the standard burn effect to any actor walking through it.</p>
+ * <p>When unlocked, the rusted mechanism overheats, setting all adjacent tiles
+ * on fire for {@value #FIRE_TURNS} turns.</p>
+ *
+ * <p>The side effect is exposed through {@link #getUnlockEffect()} so that
+ * {@link game.actions.UnlockDoorAction} never needs to downcast to this
+ * concrete type (OCP, DIP).</p>
  */
 public class IronDoor extends Ground implements LockableDoor {
 
@@ -71,8 +72,7 @@ public class IronDoor extends Ground implements LockableDoor {
     }
 
     /**
-     * Spawns fire on all adjacent floor tiles when unlocked.
-     * Called by {@link UnlockDoorAction} immediately after the door is opened.
+     * Spawns fire on all adjacent tiles when unlocked.
      *
      * @param doorLocation the location of this door on the map
      */
@@ -81,5 +81,22 @@ public class IronDoor extends Ground implements LockableDoor {
             Location dest = exit.getDestination();
             dest.setGround(new Fire(dest.getGround(), FIRE_TURNS));
         }
+    }
+
+    /**
+     * Returns the overheat {@link UnlockEffect} for this door type.
+     *
+     * <p>Spawns fire on all adjacent tiles. All iron-door logic lives here —
+     * no instanceof in the caller needed.</p>
+     *
+     * @return an {@link UnlockEffect} that triggers the overheat
+     */
+    @Override
+    public UnlockEffect getUnlockEffect() {
+        return (actor, doorLocation) -> {
+            triggerOverheat(doorLocation);
+            return actor + " unlocks the iron door. The mechanism overheats: "
+                    + "fire spreads to adjacent tiles!";
+        };
     }
 }

@@ -5,10 +5,7 @@ import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.Location;
 import game.enums.DoorLevel;
-import game.enums.WorkerAbility;
 import game.grounds.doors.AluminiumDoor;
-import game.grounds.doors.IronDoor;
-import game.grounds.doors.TitaniumDoor;
 import game.items.AccessCard;
 import game.map.AlarmSystem;
 
@@ -16,14 +13,16 @@ import game.map.AlarmSystem;
  * Action that allows a worker carrying a qualifying {@link AccessCard} to unlock
  * a security door.
  *
- * <p>Clearance is checked by comparing the card level stored in the actor's
- * inventory against the door's {@link LockableDoor#getRequiredLevel()}. No
- * {@code instanceof} checks are needed for the clearance decision itself.
- * Door-specific side effects (shock, fire, heal) are triggered by calling
- * back onto typed references obtained via {@link Location#getGroundAs}, which
- * is the engine's own capability pattern: justified because each side effect
- * is intrinsically tied to the concrete door type and cannot be modelled
- * without knowing which door was unlocked.</p>
+ * <p>Clearance is checked by comparing the card level against the door's
+ * {@link LockableDoor#getRequiredLevel()}. The post-unlock side effect is
+ * retrieved via {@link LockableDoor#getUnlockEffect()} — no {@code instanceof}
+ * or downcast is needed anywhere in this class (OCP, DIP).</p>
+ *
+ * <p>The only remaining concrete-type reference is to {@link AluminiumDoor}
+ * for the alarm lockdown check, which is an aluminium-specific precondition
+ * that cannot be modelled generically without adding alarm awareness to the
+ * {@link LockableDoor} interface (which would violate SRP). This is justified
+ * in a comment at the call site.</p>
  */
 public class UnlockDoorAction extends Action {
 
@@ -56,11 +55,15 @@ public class UnlockDoorAction extends Action {
     /**
      * Attempts to unlock the door. Steps:
      * <ol>
-     *   <li>Check the global alarm: aluminium doors re-seal under lockdown.</li>
-     *   <li>Retrieve the {@link LockableDoor} from the door's ground.</li>
+     *   <li>Perform the aluminium-door alarm lockdown check (the only door type
+     *       that re-seals under alarm — justified downcast via
+     *       {@link Location#getGroundAs} using the {@link AluminiumDoor.AlarmLocked}
+     *       interface).</li>
+     *   <li>Retrieve the {@link LockableDoor} capability from the door's ground.</li>
      *   <li>Determine the highest card level in the actor's inventory.</li>
-     *   <li>Verify the card level meets the door's required clearance.</li>
-     *   <li>Unlock and apply the door-specific side effect.</li>
+     *   <li>Verify clearance against {@link LockableDoor#getRequiredLevel()}.</li>
+     *   <li>Unlock and call {@link LockableDoor#getUnlockEffect()} — no further
+     *       type knowledge required.</li>
      * </ol>
      *
      * @param actor the worker performing the action
@@ -69,10 +72,16 @@ public class UnlockDoorAction extends Action {
      */
     @Override
     public String execute(Actor actor, GameMap map) {
-        // Alarm lockdown check for aluminium doors
-        AluminiumDoor aluminiumDoor = doorLocation.getGroundAs(AluminiumDoor.class);
-        if (aluminiumDoor != null) {
-            aluminiumDoor.activateLockdown();
+        /*
+         * Alarm lockdown is specific to AluminiumDoor and cannot be abstracted into
+         * LockableDoor without leaking alarm-system knowledge into the door interface
+         * (SRP violation). We therefore use AlarmLocked — a narrow interface
+         * implemented only by AluminiumDoor — to perform this check without coupling
+         * to the concrete class.
+         */
+        AlarmLocked AlarmLocked = doorLocation.getGroundAs(AlarmLocked.class);
+        if (AlarmLocked != null) {
+            AlarmLocked.activateLockdown();
             if (AlarmSystem.isActive()) {
                 return "The alarm is active! The aluminium door is sealed.";
             }
@@ -94,46 +103,13 @@ public class UnlockDoorAction extends Action {
         }
 
         lockable.unlock();
-        return applyUnlockEffect(actor, lockable);
-    }
 
-    /**
-     * Applies the side effect specific to the door type that was just unlocked.
-     *
-     * <p>Using typed ground lookups here is justified: each side effect is
-     * intrinsically coupled to the concrete door subtype and cannot be abstracted
-     * further into the {@link LockableDoor} interface without violating SRP.</p>
-     *
-     * @param actor    the actor who unlocked the door
-     * @param lockable the lockable ground that was just unlocked
-     * @return result message
-     */
-    private String applyUnlockEffect(Actor actor, LockableDoor lockable) {
-        // Aluminium: electrical shock
-        AluminiumDoor al = doorLocation.getGroundAs(AluminiumDoor.class);
-        if (al != null) {
-            actor.hurt(al.getShockDamage());
-            return actor + " unlocks the aluminium door to the " + direction
-                    + " and receives an electrical shock for " + al.getShockDamage() + " damage!";
+        // Delegate the side effect entirely to the door — no type knowledge here.
+        String effectResult = lockable.getUnlockEffect().apply(actor, doorLocation);
+        if (effectResult == null || effectResult.isEmpty()) {
+            return actor + " unlocks the door to the " + direction + ".";
         }
-
-        // Iron: overheat: fire on adjacent floor tiles
-        IronDoor iron = doorLocation.getGroundAs(IronDoor.class);
-        if (iron != null) {
-            iron.triggerOverheat(doorLocation);
-            return actor + " unlocks the iron door to the " + direction
-                    + ". The mechanism overheats: fire spreads to adjacent floor tiles!";
-        }
-
-        // Titanium: decontamination: heal worker
-        TitaniumDoor titanium = doorLocation.getGroundAs(TitaniumDoor.class);
-        if (titanium != null) {
-            actor.heal(TitaniumDoor.HEAL_AMOUNT);
-            return actor + " unlocks the titanium door to the " + direction
-                    + ". Decontamination sequence triggered: +" + TitaniumDoor.HEAL_AMOUNT + " HP!";
-        }
-
-        return actor + " unlocks the door to the " + direction + ".";
+        return effectResult;
     }
 
     /**
@@ -160,7 +136,7 @@ public class UnlockDoorAction extends Action {
      * @return {@code true} if the card level is sufficient
      */
     private boolean hasRequiredClearance(int cardLevel, DoorLevel requiredLevel) {
-        int requiredInt = requiredLevel.ordinal() + 1; // LEVEL_1=1, LEVEL_2=2, LEVEL_3=3
+        int requiredInt = requiredLevel.ordinal() + 1;
         return cardLevel >= requiredInt;
     }
 

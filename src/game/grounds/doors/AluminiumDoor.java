@@ -1,11 +1,11 @@
 package game.grounds.doors;
 
-import edu.monash.fit2099.engine.actions.ActionList;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
+import game.actions.AlarmLocked;
 import game.actions.LockableDoor;
-import game.actions.UnlockDoorAction;
+import game.actions.UnlockEffect;
 import game.enums.DoorLevel;
 import game.map.AlarmSystem;
 
@@ -13,9 +13,14 @@ import game.map.AlarmSystem;
  * An aluminium security door ({@code =}) requiring Access Card Level 1 or higher.
  *
  * <p>When unlocked, faulty wiring delivers an electrical shock to the worker,
- * dealing exactly 2 points of damage. The door seals again if the alarm is active.</p>
+ * dealing exactly {@value #SHOCK_DAMAGE} points of damage. The door re-seals
+ * if the alarm is active.</p>
+ *
+ * <p>The side effect is exposed through {@link #getUnlockEffect()} so that
+ * {@link game.actions.UnlockDoorAction} never needs to downcast to this
+ * concrete type (OCP, DIP).</p>
  */
-public class AluminiumDoor extends Ground implements LockableDoor {
+public class AluminiumDoor extends Ground implements LockableDoor, AlarmLocked {
 
     /** Damage dealt to the worker from the electrical short-circuit on unlock. */
     private static final int SHOCK_DAMAGE = 2;
@@ -43,7 +48,7 @@ public class AluminiumDoor extends Ground implements LockableDoor {
 
     /**
      * Unlocks this door, allowing actors to pass through.
-     * Called by {@link UnlockDoorAction} after clearance is verified.
+     * Called by {@link game.actions.UnlockDoorAction} after clearance is verified.
      */
     @Override
     public void unlock() {
@@ -51,7 +56,7 @@ public class AluminiumDoor extends Ground implements LockableDoor {
     }
 
     /**
-     * Returns whether this door is currently unlocked.
+     * Returns whether this door is currently unlocked and not on lockdown.
      *
      * @return {@code true} if unlocked and not on lockdown
      */
@@ -62,6 +67,7 @@ public class AluminiumDoor extends Ground implements LockableDoor {
 
     /**
      * Activates lockdown if the global alarm is active, re-sealing the door.
+     * Implements {@link game.actions.AlarmLocked} so callers need not reference this class directly.
      */
     public void activateLockdown() {
         if (AlarmSystem.isActive()) {
@@ -82,11 +88,23 @@ public class AluminiumDoor extends Ground implements LockableDoor {
     }
 
     /**
-     * Returns the shock damage constant so {@link UnlockDoorAction} can apply it.
+     * Returns the electrical-shock {@link UnlockEffect} for this door type.
      *
-     * @return damage dealt on unlock
+     * <p>Also checks for alarm lockdown before the effect runs. This keeps
+     * all aluminium-door logic inside this class — no instanceof in the caller.</p>
+     *
+     * @return an {@link UnlockEffect} that shocks the actor and handles lockdown
      */
-    public int getShockDamage() {
-        return SHOCK_DAMAGE;
+    @Override
+    public UnlockEffect getUnlockEffect() {
+        return (actor, doorLocation) -> {
+            // Re-check lockdown: activateLockdown has already been called by execute()
+            if (!isUnlocked()) {
+                return "The alarm is active — the aluminium door is sealed.";
+            }
+            actor.hurt(SHOCK_DAMAGE);
+            return actor + " unlocks the aluminium door and receives an electrical shock for "
+                    + SHOCK_DAMAGE + " damage!";
+        };
     }
 }

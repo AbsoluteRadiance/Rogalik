@@ -1,18 +1,21 @@
 package game.grounds.doors;
 
-import edu.monash.fit2099.engine.actions.ActionList;
 import edu.monash.fit2099.engine.actors.Actor;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
 import game.actions.LockableDoor;
-import game.actions.UnlockDoorAction;
+import game.actions.UnlockEffect;
 import game.enums.DoorLevel;
 
 /**
  * A titanium security door ({@code M}) requiring Access Card Level 3.
  *
  * <p>When unlocked, a localised decontamination sequence is triggered,
- * immediately healing the worker for 5 health points.</p>
+ * immediately healing the worker for {@value #HEAL_AMOUNT} health points.</p>
+ *
+ * <p>The side effect is exposed through {@link #getUnlockEffect()} so that
+ * {@link game.actions.UnlockDoorAction} never needs to downcast to this
+ * concrete type (OCP, DIP).</p>
  */
 public class TitaniumDoor extends Ground implements LockableDoor {
 
@@ -64,5 +67,22 @@ public class TitaniumDoor extends Ground implements LockableDoor {
     @Override
     public boolean canActorEnter(Actor actor) {
         return unlocked;
+    }
+
+    /**
+     * Returns the decontamination {@link UnlockEffect} for this door type.
+     *
+     * <p>Heals the actor on unlock. All titanium-door logic lives here —
+     * no instanceof in the caller needed.</p>
+     *
+     * @return an {@link UnlockEffect} that heals the actor
+     */
+    @Override
+    public UnlockEffect getUnlockEffect() {
+        return (actor, doorLocation) -> {
+            actor.heal(HEAL_AMOUNT);
+            return actor + " unlocks the titanium door. Decontamination sequence triggered: +"
+                    + HEAL_AMOUNT + " HP!";
+        };
     }
 }

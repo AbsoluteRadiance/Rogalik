@@ -22,8 +22,6 @@ import game.items.Flask;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <p>GameMap.actorLocations is injected by World.addGameMap(), so every test
  * that places actors must register the map with a World first.</p>
  */
-class UnitTests {
+class Req2Tests {
 
     /** Minimal World subclass — overrides stillRunning() so run() is never needed. */
     private static class TestWorld extends World {

@@ -6,6 +6,7 @@ import edu.monash.fit2099.engine.positions.Exit;
 import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
 import game.actions.TeleportAction;
+import game.actions.Teleportable;
 import game.items.Flask;
 
 import java.util.ArrayList;
@@ -20,12 +21,19 @@ import java.util.Random;
  * upon arrival immediately spawns one {@link Flask} on an empty tile directly
  * adjacent to the destination circle.</p>
  *
- * <p>If the worker is the only circle on the map (i.e., no other destination
- * exists), no action is offered.</p>
+ * <p>Implements {@link Teleportable} so that {@link #findOtherCircles} can
+ * discover peer circles via
+ * {@link Location#getGroundAs(Class) getGroundAs(Teleportable.class)} —
+ * satisfying the engine's requirement that capability types be interfaces or
+ * abstract classes (avoids the {@link IllegalArgumentException} thrown when
+ * a concrete class is passed to {@code asCapability}).</p>
  */
-public class MagicCircle extends Ground {
+public class MagicCircle extends Ground implements Teleportable {
 
     private final Random random = new Random();
+
+    /** The location of this circle, set the first time {@link #allowableActions} is called. */
+    private Location cachedLocation = null;
 
     /** Constructor for MagicCircle. */
     public MagicCircle() {
@@ -33,16 +41,31 @@ public class MagicCircle extends Ground {
     }
 
     /**
+     * Returns this circle's location on the map.
+     *
+     * <p>The location is cached on the first call to {@link #allowableActions}
+     * because the ground is not given its location at construction time.</p>
+     *
+     * @return the {@link Location} of this circle, or {@code null} if not yet placed
+     */
+    @Override
+    public Location getLocation() {
+        return cachedLocation;
+    }
+
+    /**
      * When the worker is standing directly on this circle (direction is empty),
      * offers a teleport action to a randomly selected other magic circle.
      *
      * @param actor     the actor standing on this tile
-     * @param location  this circle's location
+     * @param location  this circle's location (used to cache and find peers)
      * @param direction direction from the actor to this ground (empty if standing on it)
      * @return list containing one teleport action, or empty if no other circle exists
      */
     @Override
     public ActionList allowableActions(Actor actor, Location location, String direction) {
+        cachedLocation = location; // cache for getLocation()
+
         ActionList actions = new ActionList();
         if (!direction.isEmpty()) {
             return actions;
@@ -60,7 +83,12 @@ public class MagicCircle extends Ground {
     }
 
     /**
-     * Scans the current map for all other {@link MagicCircle} ground tiles.
+     * Scans the current map for all other {@link Teleportable} tiles.
+     *
+     * <p>Uses {@link Location#getGroundAs(Class) getGroundAs(Teleportable.class)}
+     * (interface lookup) rather than the concrete {@code MagicCircle} class, which
+     * would cause an {@link IllegalArgumentException} from the engine's
+     * {@code asCapability} guard.</p>
      *
      * @param thisLocation this circle's location (excluded from results)
      * @return list of locations containing other magic circles
@@ -68,7 +96,8 @@ public class MagicCircle extends Ground {
     private List<Location> findOtherCircles(Location thisLocation) {
         List<Location> circles = new ArrayList<>();
         for (Location nearby : thisLocation.getNearbyLocations(Integer.MAX_VALUE)) {
-            if (nearby.getGroundAs(MagicCircle.class) != null && !nearby.equals(thisLocation)) {
+            Teleportable peer = nearby.getGroundAs(Teleportable.class);
+            if (peer != null && !nearby.equals(thisLocation)) {
                 circles.add(nearby);
             }
         }

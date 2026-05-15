@@ -14,9 +14,10 @@ import edu.monash.fit2099.engine.positions.Location;
  * instances of this action with different injected effects, avoiding any duplication
  * of movement logic.</p>
  *
- * <p>The action uses {@link GameMap#moveActor} to relocate the actor; the
- * destination map is retrieved directly from the {@link Location} object so
- * cross-map teleportation is supported transparently.</p>
+ * <p>If the actor is already at the destination (source == destination), the
+ * {@code moveActor} call is skipped to avoid an {@link IllegalArgumentException}
+ * from the engine's one-actor-per-location rule; the {@link TeleportEffect} is
+ * still fired so devices that rely on it (e.g. side-effect tests) behave correctly.</p>
  */
 public class TeleportAction extends Action {
 
@@ -50,6 +51,10 @@ public class TeleportAction extends Action {
      * Moves the actor to the destination on the destination's map,
      * then applies the {@link TeleportEffect}.
      *
+     * <p>If the actor is already at the destination, the move is skipped.
+     * The engine's {@code moveActor} would throw {@link IllegalArgumentException}
+     * in that case because the actor is already occupying the target location.</p>
+     *
      * @param actor the actor performing the teleport
      * @param map   the map the actor is currently on (may differ from destination map)
      * @return a string describing what happened
@@ -57,12 +62,15 @@ public class TeleportAction extends Action {
     @Override
     public String execute(Actor actor, GameMap map) {
         Location source = map.locationOf(actor);
-        GameMap destMap = destination.map();
 
-        // Move actor — works for both same-map and cross-map teleportation
-        map.moveActor(actor, destination);
+        // Only move if the actor is not already at the destination.
+        // Skipping avoids the IllegalArgumentException from the one-actor-per-location rule.
+        if (!source.equals(destination)) {
+            destination.map().moveActor(actor, destination);
+        }
 
-        // Apply post-arrival side effect (may involve source location for corruption etc.)
+        // Always fire the effect — even for degenerate same-location teleports
+        // so that tests and devices that rely on the effect callback work correctly.
         effect.apply(actor, destination, source);
 
         return actor + " teleports to " + destination + ".";
