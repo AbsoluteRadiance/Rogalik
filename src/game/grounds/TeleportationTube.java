@@ -8,6 +8,7 @@ import edu.monash.fit2099.engine.positions.Ground;
 import edu.monash.fit2099.engine.positions.Location;
 import game.actions.TeleportAction;
 import game.actions.TeleportEffect;
+import game.actions.Tubeable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.Random;
  * satisfying the requirement that all teleportation devices support multiple
  * destination locations.</p>
  */
-public class TeleportationTube extends Ground {
+public class TeleportationTube extends Ground implements Tubeable {
 
     /** Duration (in turns) of the fire spawned at the arrival surroundings. */
     private static final int ARRIVAL_FIRE_TURNS = 2;

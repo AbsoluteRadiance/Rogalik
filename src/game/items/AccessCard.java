@@ -10,6 +10,7 @@ import edu.monash.fit2099.engine.statistics.BaseStatistic;
 import game.actions.LockableDoor;
 import game.actions.Purchasable;
 import game.actions.UnlockDoorAction;
+import game.items.ClearanceLevel;
 import game.actors.Wallet;
 import game.enums.ItemStatistics;
 import game.enums.WorkerAbility;
@@ -25,9 +26,9 @@ import game.enums.WorkerAbility;
  * </ul>
  * Uses {@code asCapability()} to access wallet without tight coupling.</p>
  *
- * @author Ben (base), Shivam (REQ1 tiered Purchasable)
+ * @author Ben (base), Shivam (REQ1 tiered Purchasable), Ilya
  */
-public class AccessCard extends Item implements Purchasable {
+public class AccessCard extends Item implements ClearanceLevel, Purchasable {
 
     /** The clearance level of this card. */
     private final int level;

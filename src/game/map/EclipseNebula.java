@@ -5,6 +5,7 @@ import edu.monash.fit2099.engine.positions.DefaultGroundCreator;
 import edu.monash.fit2099.engine.positions.GameMap;
 import edu.monash.fit2099.engine.positions.Location;
 import edu.monash.fit2099.engine.positions.World;
+import game.actions.Tubeable;
 import game.actors.ContractedWorker;
 import game.actors.WeightLimitedInventory;
 import game.grounds.doors.AluminiumDoor;
@@ -68,7 +69,6 @@ public class EclipseNebula extends World {
         groundCreator.registerGround('#', Wall::new);
         groundCreator.registerGround('~', Puddle::new);
         groundCreator.registerGround('_', Floor::new);
-        // Tiered doors
         groundCreator.registerGround('=', AluminiumDoor::new);
         groundCreator.registerGround('N', IronDoor::new);
         groundCreator.registerGround('M', TitaniumDoor::new);
@@ -77,7 +77,6 @@ public class EclipseNebula extends World {
         groundCreator.registerGround('≈', ToxicWaste::new);
         groundCreator.registerGround('Φ', TeleportationTube::new);
         groundCreator.registerGround('◎', MagicCircle::new);
-        // ◈ AlienCube: item placed via addItem; use Floor as the underlying ground
         groundCreator.registerGround('◈', Floor::new);
 
         //  99-Deprecated 
@@ -105,8 +104,7 @@ public class EclipseNebula extends World {
                 "....................########################################"
         );
 
-        //  Armoured Ship 
-        // Φ at col 2, row 2 inside the ship
+        //  Armoured Ship
         List<String> shipMap = Arrays.asList(
                 "#######",
                 "#≡____#",
@@ -119,26 +117,26 @@ public class EclipseNebula extends World {
         // ◎ = MagicCircle  ◈ = AlienCube drop position (Floor underneath)
         // N = IronDoor  M = TitaniumDoor  = = AluminiumDoor
         List<String> overflow20 = Arrays.asList(
-                "......................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
-                "...≈≈≈≈≈≈≈............≈≈≈≈≈≈≈≈≈≈≈≈≈≈##################≈≈≈≈≈≈≈",
-                "...≈≈≈≈≈≈≈............≈≈≈≈≈≈≈≈≈≈≈≈≈≈#________________#≈≈≈≈≈≈≈",
-                "...≈≈≈≈≈≈≈............≈≈≈≈≈≈≈≈#######_______◈________#≈≈≈≈≈≈≈",
-                "...≈≈≈≈≈≈≈............≈≈≈≈≈≈≈≈#_____N________________#≈≈≈≈≈≈≈",
-                "...≈≈≈≈≈≈≈...≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈#_◎___###########N######≈≈≈≈≈≈≈",
+                ".....................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
+                "...#######...........≈≈≈≈≈≈≈≈≈≈≈≈≈≈##################≈≈≈≈≈≈≈",
+                "...#≡____#...........≈≈≈≈≈≈≈≈≈≈≈≈≈≈#________________#≈≈≈≈≈≈≈",
+                "...#__Φ__=...........≈≈≈≈≈≈≈≈#######_______◈________#≈≈≈≈≈≈≈",
+                "...#_____#...........≈≈≈≈≈≈≈≈#_____=________________#≈≈≈≈≈≈≈",
+                "...#######...≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈#_◎___###########=######≈≈≈≈≈≈≈",
                 ".............≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈#_____#≈≈≈≈≈≈≈≈≈#______#≈≈≈≈≈≈≈",
-                "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈#########N#####≈≈≈≈≈≈≈≈≈#______#≈≈≈≈≈≈≈",
+                "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈#########=#####≈≈≈≈≈≈≈≈≈#______#≈≈≈≈≈≈≈",
                 "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈#_____________#≈≈≈≈≈≈≈≈≈#___◎__#≈≈≈≈≈≈≈",
                 "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈#______o______#≈≈≈≈≈≈≈≈≈#______#≈≈≈≈≈≈≈",
-                ".............≈≈≈≈≈≈≈≈######M########≈≈≈≈≈≈≈≈≈####M###≈≈≈≈≈≈≈",
+                ".............≈≈≈≈≈≈≈≈######=########≈≈≈≈≈≈≈≈≈####=###≈≈≈≈≈≈≈",
                 "...≈≈≈≈≈≈≈≈≈.≈≈≈≈≈≈≈≈≈≈≈≈≈#_#≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈#_#≈≈≈≈≈≈≈≈≈",
                 "...≈≈≈≈≈≈≈≈≈.≈≈≈≈≈≈≈≈≈≈≈≈≈#_#≈≈≈≈≈###############_#######≈≈≈",
                 ".............≈≈≈≈≈≈≈≈≈≈≈≈≈#_____________________________#≈≈≈",
-                "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈≈≈≈≈≈#_______M__________◈__≈≈≈≈____#≈≈≈",
+                "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈≈≈≈≈≈#_______=__________◈__≈≈≈≈____#≈≈≈",
                 "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈≈≈≈≈≈#___◎___#_____________≈≈≈≈≈≈__≈≈≈≈",
                 "....≈≈≈≈≈≈...≈≈≈≈≈≈≈≈≈≈≈≈≈######################≈≈≈≈≈≈≈≈≈≈≈≈",
-                ".............≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
-                "......................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
-                "......................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈"
+                ".............≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
+                ".....................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈",
+                ".....................≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈"
         );
 
         //  Create maps 
@@ -206,7 +204,7 @@ public class EclipseNebula extends World {
     private void wireTube(GameMap sourceMap, int x, int y,
                           GameMap destMapA, String labelA,
                           GameMap destMapB, String labelB) {
-        TeleportationTube tube = sourceMap.at(x, y).getGroundAs(TeleportationTube.class);
+        Tubeable tube = sourceMap.at(x, y).getGroundAs(Tubeable.class);
         if (tube == null) {
             return;
         }

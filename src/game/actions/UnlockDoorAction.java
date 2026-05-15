@@ -7,6 +7,7 @@ import edu.monash.fit2099.engine.positions.Location;
 import game.enums.DoorLevel;
 import game.grounds.doors.AluminiumDoor;
 import game.items.AccessCard;
+import game.items.ClearanceLevel;
 import game.map.AlarmSystem;
 
 /**
@@ -104,7 +105,7 @@ public class UnlockDoorAction extends Action {
 
         lockable.unlock();
 
-        // Delegate the side effect entirely to the door — no type knowledge here.
+        // Delegate the side effect entirely to the door - no type knowledge here.
         String effectResult = lockable.getUnlockEffect().apply(actor, doorLocation);
         if (effectResult == null || effectResult.isEmpty()) {
             return actor + " unlocks the door to the " + direction + ".";
@@ -120,11 +121,8 @@ public class UnlockDoorAction extends Action {
      * @return the highest access card level, or 0 if none found
      */
     private int highestCardLevel(Actor actor) {
-        return actor.getInventory().getItemsAs(AccessCard.class)
-                .stream()
-                .mapToInt(AccessCard::getLevel)
-                .max()
-                .orElse(0);
+        return actor.getInventory().getItemsAs(ClearanceLevel.class)
+                .stream().mapToInt(ClearanceLevel::getLevel).max().orElse(0);
     }
 
     /**
